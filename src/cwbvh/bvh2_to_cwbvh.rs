@@ -27,8 +27,6 @@ const INVALID: u8 = u8::MAX;
 const INVALID32: u32 = u32::MAX;
 const INVALID_USIZE: usize = INVALID32 as usize;
 
-const PRIM_COST: f32 = 0.3;
-
 impl<'a> Bvh2Converter<'a> {
     /// Initialize the Bvh2 to CwBvh converter.
     pub fn new(bvh2: &'a Bvh2, order_children: bool, include_exact_node_aabbs: bool) -> Self {
@@ -211,9 +209,9 @@ impl<'a> Bvh2Converter<'a> {
     }
 
     /// Fill cost table for bvh2 -> bvh8 conversion
-    pub fn calculate_cost(&mut self, max_prims_per_leaf: u32) {
+    pub fn calculate_cost(&mut self, max_prims_per_leaf: u32, prim_cost: f32) {
         crate::scope!("calculate_cost");
-        self.calculate_cost_impl(0, max_prims_per_leaf, 0);
+        self.calculate_cost_impl(0, max_prims_per_leaf, prim_cost, 0);
     }
 
     // Based on https://github.com/jan-van-bergen/GPU-Raytracer/blob/6559ae2241c8fdea0ddaec959fe1a47ec9b3ab0d/Src/BVH/Converters/BVH8Converter.cpp#L24
@@ -221,6 +219,7 @@ impl<'a> Bvh2Converter<'a> {
         &mut self,
         node_index: usize,
         max_prims_per_leaf: u32,
+        prim_cost: f32,
         _current_depth: i32,
     ) -> u32 {
         let node = &self.bvh2.nodes[node_index];
@@ -247,7 +246,7 @@ impl<'a> Bvh2Converter<'a> {
             }
 
             // SAH cost
-            let cost_leaf = half_area * (num_primitives as f32) * PRIM_COST;
+            let cost_leaf = half_area * (num_primitives as f32) * prim_cost;
 
             for i in 0..7 {
                 let decision = &mut self.decisions[node_dec_idx + i];
@@ -258,17 +257,19 @@ impl<'a> Bvh2Converter<'a> {
             num_primitives = self.calculate_cost_impl(
                 first_index as usize,
                 max_prims_per_leaf,
+                prim_cost,
                 _current_depth + 1,
             ) + self.calculate_cost_impl(
                 (first_index + 1) as usize,
                 max_prims_per_leaf,
+                prim_cost,
                 _current_depth + 1,
             );
 
             // Separate case: i=0 (i=1 in the paper)
             {
                 let cost_leaf = if num_primitives <= max_prims_per_leaf {
-                    (num_primitives as f32) * half_area * PRIM_COST
+                    (num_primitives as f32) * half_area * prim_cost
                 } else {
                     f32::INFINITY
                 };
@@ -489,6 +490,7 @@ pub struct Decision {
 pub fn bvh2_to_cwbvh(
     bvh2: &Bvh2,
     max_prims_per_leaf: u32,
+    prim_cost: f32,
     order_children: bool,
     include_exact_node_aabbs: bool,
 ) -> CwBvh {
@@ -496,7 +498,7 @@ pub fn bvh2_to_cwbvh(
         return CwBvh::default();
     }
     let mut converter = Bvh2Converter::new(bvh2, order_children, include_exact_node_aabbs);
-    converter.calculate_cost(max_prims_per_leaf);
+    converter.calculate_cost(max_prims_per_leaf, prim_cost);
     converter.convert_to_cwbvh();
 
     CwBvh {

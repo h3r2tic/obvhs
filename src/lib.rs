@@ -161,6 +161,8 @@ pub struct BvhBuildParams {
     /// Multiplier for traversal cost calculation during collapse. A higher value will result in more primitives
     /// per leaf.
     pub collapse_traversal_cost: f32,
+    /// TODO: SAH cost of a primitive?
+    pub prim_cost: f32,
 }
 
 impl BvhBuildParams {
@@ -174,6 +176,7 @@ impl BvhBuildParams {
             sort_precision: SortPrecision::U64,
             max_prims_per_leaf: 1,
             collapse_traversal_cost: 1.0,
+            prim_cost: 0.3,
         }
     }
     pub fn very_fast_build() -> Self {
@@ -186,6 +189,7 @@ impl BvhBuildParams {
             sort_precision: SortPrecision::U64,
             max_prims_per_leaf: 8,
             collapse_traversal_cost: 3.0,
+            prim_cost: 0.3,
         }
     }
     pub fn fast_build() -> Self {
@@ -198,6 +202,7 @@ impl BvhBuildParams {
             sort_precision: SortPrecision::U64,
             max_prims_per_leaf: 8,
             collapse_traversal_cost: 3.0,
+            prim_cost: 0.3,
         }
     }
     /// Tries to be around the same build time as embree but with faster traversal
@@ -211,6 +216,7 @@ impl BvhBuildParams {
             sort_precision: SortPrecision::U64,
             max_prims_per_leaf: 8,
             collapse_traversal_cost: 3.0,
+            prim_cost: 0.3,
         }
     }
     pub fn slow_build() -> Self {
@@ -223,6 +229,7 @@ impl BvhBuildParams {
             sort_precision: SortPrecision::U128,
             max_prims_per_leaf: 8,
             collapse_traversal_cost: 3.0,
+            prim_cost: 0.3,
         }
     }
     pub fn very_slow_build() -> Self {
@@ -235,6 +242,7 @@ impl BvhBuildParams {
             sort_precision: SortPrecision::U128,
             max_prims_per_leaf: 8,
             collapse_traversal_cost: 3.0,
+            prim_cost: 0.3,
         }
     }
 }
