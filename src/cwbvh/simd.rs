@@ -13,6 +13,10 @@ use crate::{
 };
 
 impl CwBvhNode {
+    #[cfg(all(
+        any(target_arch = "x86", target_arch = "x86_64"),
+        target_feature = "sse2"
+    ))]
     #[inline(always)]
     pub fn intersect_ray_simd(&self, ray: &Ray, oct_inv4: u32) -> u32 {
         let adj_ray_dir_inv = self.compute_extent() * ray.inv_direction;
